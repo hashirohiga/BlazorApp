@@ -1,0 +1,78 @@
+﻿@page "/tasks"
+@using Newtonsoft.Json
+@attribute [StreamRendering]
+
+<PageTitle>Tasks</PageTitle>
+
+<h1>Tasks</h1>
+
+<p>This component demonstrates showing data.</p>
+
+@if (tasks == null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Id</th>
+                <th>Name</th>
+                <th>Description</th>
+                <th>Status_ID</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var task in tasks)
+            {
+                <tr>
+                    <td>@task.Id</td>
+                    <td>@task.Name</td>
+                    <td>@task.Description</td>
+                    <td>@task.Status_ID</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+
+@code {
+
+    private TasksForecast[]? tasks;
+    // private static readonly HttpClient client = new HttpClient();
+
+    // private int currentCount = 0;
+    static readonly HttpClient client = new HttpClient();
+
+    protected override async Task OnInitializedAsync()
+    {
+
+        try
+        {
+            using HttpResponseMessage response = await client.GetAsync("http://localhost:5125/api/Tasks");
+            response.EnsureSuccessStatusCode();
+            string responseBody = await response.Content.ReadAsStringAsync();
+            // Above three lines can be replaced with new helper method below
+            // string responseBody = await client.GetStringAsync(uri);
+
+            Console.WriteLine(responseBody);
+            tasks = JsonConvert.DeserializeObject<TasksForecast[]>(responseBody);
+
+        }
+        catch (HttpRequestException e)
+        {
+            Console.WriteLine("\nException Caught!");
+            Console.WriteLine("Message :{0} ", e.Message);
+        }
+    }
+
+    private class TasksForecast
+    {
+        public long Id { get; set; }
+        public string? Name { get; set; }
+        public string? Description { get; set; }
+        public int Status_ID { get; set; }
+    }
+}
