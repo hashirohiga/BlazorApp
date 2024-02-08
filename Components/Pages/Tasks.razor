@@ -26,11 +26,26 @@ else
         <tbody>
             @foreach (var task in tasks)
             {
-                <tr>
+                <tr runat="server" id="list">
                     <td>@task.Id</td>
-                    <td>@task.Name</td>
-                    <td>@task.Description</td>
-                    <td>@task.Status_ID</td>
+                    <td><input type="text" value="@task.Name"/></td>
+                    <td><input type="text" value="@task.Description"/></td>
+                    <td><select>
+                        @* <option value="@task.Status_ID" selected ></option> *@
+                        @* <option >@task.Status_ID</option>   *@
+                        @foreach (var status in statuses)
+                            {
+                                if (task.Status_ID == status.Id)
+                                {
+                                <option value="@task.Status_ID" selected>@status.Status_Name</option>    
+                                }
+                                else
+                                {
+                                <option >@status.Status_Name</option>      
+                                }
+                            }
+                    </select ></td>
+                    <td><button class="btn btn-primary" @onclick="PutAction">Put</button></td>
                 </tr>
             }
         </tbody>
@@ -41,6 +56,7 @@ else
 @code {
 
     private TasksForecast[]? tasks;
+    private StatusesForecast[]? statuses;
     // private static readonly HttpClient client = new HttpClient();
 
     // private int currentCount = 0;
@@ -54,12 +70,41 @@ else
             using HttpResponseMessage response = await client.GetAsync("http://localhost:5125/api/Tasks");
             response.EnsureSuccessStatusCode();
             string responseBody = await response.Content.ReadAsStringAsync();
+            tasks = JsonConvert.DeserializeObject<TasksForecast[]>(responseBody);
+
+            using HttpResponseMessage responseStatuses = await client.GetAsync("http://localhost:5125/api/Statuses");
+            responseStatuses.EnsureSuccessStatusCode();
+            responseBody = await responseStatuses.Content.ReadAsStringAsync();
+            statuses = JsonConvert.DeserializeObject<StatusesForecast[]>(responseBody);
+
+        }
+        catch (HttpRequestException e)
+        {
+        }
+    }
+    async private void PutAction()
+    {
+
+        try
+        {
+            using HttpResponseMessage response = await client.GetAsync("http://localhost:5125/api/Tasks/1");
+            // using StringContent jsonContent = new(
+            // JsonSerializer.Serialize(new 
+            // {
+            //     Id = task.Id,
+            //     Name = task.Name,
+            //     Description = task.Description,
+            //     Status_ID = task.Status_ID
+            // }),
+            // Encoding.UTF8,
+            // "application/json");
+            // using HttpResponseMessage response = await client.PutAsync("http://localhost:5125/api/Tasks/1", tasks);
+            response.EnsureSuccessStatusCode();
+            string responseBody = await response.Content.ReadAsStringAsync();
             // Above three lines can be replaced with new helper method below
             // string responseBody = await client.GetStringAsync(uri);
 
             Console.WriteLine(responseBody);
-            tasks = JsonConvert.DeserializeObject<TasksForecast[]>(responseBody);
-
         }
         catch (HttpRequestException e)
         {
@@ -74,5 +119,10 @@ else
         public string? Name { get; set; }
         public string? Description { get; set; }
         public int Status_ID { get; set; }
+    }
+    private class StatusesForecast
+    {
+        public long Id { get; set; }
+        public string? Status_Name { get; set;}
     }
 }
